@@ -1,0 +1,8 @@
+# ignore ALL cpython files
+*.cpython-39.pyc
+
+#ignore All notebook checkpoints
+.ipynb_checkpoints
+
+# ignore ALL .log files
+*.log
