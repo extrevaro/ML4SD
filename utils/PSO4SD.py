@@ -96,7 +96,7 @@ def gcSwarms_optimization_function(X, model_setup, target_score, max_deletions):
     return contextualized_objective_function.compute(X)
 
 
-def gcSwarms(model_setup, optimization_function, max_deletions, combination_number=100000, options={'c1': 2.0,'c2': 2.0,'w': 1.0,'k': float,'p': 1}, init_method='LHS', cores=6):
+def gcSwarms(model_setup, optimization_function, max_deletions, combination_number=100000, options={'c1': 2.0,'c2': 2.0,'w': 1.0,'k': float,'p': 1}, init_method='LHS', groups=4, cores=6):
     cost_history = []
     pos_history = []
     n_iterations = 100
@@ -106,39 +106,39 @@ def gcSwarms(model_setup, optimization_function, max_deletions, combination_numb
     print('Generating initialization samples through Latin Hypercube Sampling...')
     n_particles = int(combination_number/n_iterations)
     dimensions = len(model_setup['reaction_list'])
-    options['k'] = n_particles/4 #fragment the particles in 4 subgroups
-    	
-    #construct initial population by LHS
+    options['k'] = n_particles/groups # fragment the particles in subgroups
+    
+    # Construct initial population by LHS
     if init_method == 'LHS':
-    	samples_pos = generate_LHS_gcSwarms_combinatorial_space(max_deletions, model_setup['reaction_list'], n_particles)
+        samples_pos = generate_LHS_gcSwarms_combinatorial_space(max_deletions, model_setup['reaction_list'], n_particles)
 
-    #construct initial population by random sampling
+    # Construct initial population by random sampling
     elif init_method == 'random':
-    	samples_pos = np.array([np.array(random.choices((1,0), weights=[(max_deletions/2)/dimensions, 1-((max_deletions/2)/dimensions)], k=dimensions)) for _ in range(n_particles)])
-    	
+        samples_pos = np.array([np.array(random.choices((1, 0), weights=[(max_deletions/2)/dimensions, 1-((max_deletions/2)/dimensions)], k=dimensions)) for _ in range(n_particles)])
+    
     elif init_method == 'pre_computed':
-    	print('Not implemented yet!')       
+        print('Not implemented yet!')
 
-    print('Constructing optimization problem...')    
+    print('Constructing optimization problem...')
     optimizer = BinaryPSO(n_particles=n_particles,
                           dimensions=dimensions,
                           options=options,
                           init_pos=samples_pos)
     
-    print('Running gcSwarms search...')    
+    print('Running gcSwarms search...')
     cost, pos = optimizer.optimize(optimization_function, iters=n_iterations, n_processes=cores)
     
-    print('Search ended !')
+    print('Search ended!')
     print("Best cost:", cost)
     print("Best position:", pos)
-    #display search history
+    # Display search history
     plot_cost_history(cost_history=optimizer.cost_history)
     
     print('Saving results in a pandas.DataFrame structure')
     results = pso_result_to_library(optimizer, model_setup['reaction_list'], mode='binary')
-    results = results[model_setup['reaction_list']+["Score"]] #REMOVE THE "GENERATION" COLUMN
+    results = results[model_setup['reaction_list'] + ["Score"]] # REMOVE THE "GENERATION" COLUMN
     results = results.fillna(0)
-    results = results.drop_duplicates() 
+    results = results.drop_duplicates()
     
     return results
 

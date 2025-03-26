@@ -28,8 +28,10 @@ A key advance of this methodology is that, **in addition to learning optimal des
 
 ### Dependencies
 
-* All python-related dependencies are collected in [environment.yml](https://github.com/extrevaro/ML4SD/blob/master/environment.yml).
-* [Slurm Workload Manager](https://slurm.schedmd.com/) for training large models through [TrainGeneralistModel.py](https://github.com/extrevaro/ML4SD/TrainGeneralistModel.py)
+* For assuring a clean install all python-related dependencies are collected in [environment.yml](https://github.com/extrevaro/ML4SD/blob/master/environment.yml)
+* This repository was developed in and intended for linux-based operative systems.
+* The testing of the code was performed using python 3.9.7
+* [Slurm Workload Manager](https://slurm.schedmd.com/) is needed for training large models through [TrainGeneralistModel.py](https://github.com/extrevaro/ML4SD/TrainGeneralistModel.py)
 * For SD algorithm-specific requirements (e.g Matlab needed for gcfront), please visit their respective pages.
 
 ### Installing

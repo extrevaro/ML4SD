@@ -175,33 +175,40 @@ class StrainDesignScorer:
         
         
     def parallel_pfba_yield_analysis(self, iterable):
-        model=self.model_setup['model']
+        # Extract the model from the model setup
+        model = self.model_setup['model']
+        
+        # Get the number of carbon atoms in the target reaction and carbon source
         target_carbons = [m for m in model.reactions.get_by_id(self.model_setup['target_reaction']).metabolites][0].elements['C']
         uptake_carbons = [m for m in model.reactions.get_by_id(self.model_setup['carbon_source']).metabolites][0].elements['C']
         duration = 0
 
+        # Set the bounds for the reactions in the model
         for rxn, bounds in self.model_setup['model_bounds'].items():
             model.reactions.get_by_id(rxn).bounds = bounds
 
-        for d, r in zip(iterable==1, np.array(self.model_setup['reaction_list'])):
+        # Knock out reactions based on the iterable
+        for d, r in zip(iterable == 1, np.array(self.model_setup['reaction_list'])):
             if d:
                 model.reactions.get_by_id(r).knock_out()
+        
         try:
+            # Perform parsimonious flux balance analysis (pFBA)
             pfba_result = pfba(model)
 
-            if pfba_result[self.model_setup['target_biomass']] < 0.05*self.model_setup['max_target_biomass_flux']: #only compute yield if growt is above 5 percent of WT
+            # Check if the biomass flux is above 5% of the maximum target biomass flux
+            if pfba_result[self.model_setup['target_biomass']] < 0.05 * self.model_setup['max_target_biomass_flux']:
+                # If growth is below 5%, set product yield to 0
                 product_yield = 0
-            
             else:
-                target_flux = pfba_result[self.model_setup['target_reaction']]            
-                uptake_flux = abs(pfba_result[self.model_setup['carbon_source']])                    
-                product_yield = (target_flux*target_carbons)/(uptake_flux*uptake_carbons)
-
-            if product_yield > 0 :
-                end = time.time()
-                duration = end-self.start           
-
+                # Otherwise, calculate the target flux
+                target_flux = pfba_result[self.model_setup['target_reaction']]
+                # Calculate the product yield based on the target flux and carbon atoms
+                product_yield = (target_flux * target_carbons) / (uptake_carbons * abs(pfba_result[self.model_setup['carbon_source']]))
+        
         except Exception as e:
+            # Handle any exceptions that occur during pFBA
+            print(f"Error during pFBA: {e}")
             product_yield = 0
             
         yield_result =list(iterable)+[product_yield]
@@ -343,18 +350,18 @@ class StrainDesignScorer:
         
 
     def parallel_pathway_distribution_yield(self, iterable):
-    	assert type(self.model_setup['model']) == list and len(self.model_setup['model'])>1,"For distributing a pathway you need to pass a list of models."
-    	
-    	assert all([type(r)==cb.core.reaction.Reaction for r in self.model_setup['reaction_list']]),"Target list need to be composed of cobra.Reaction elements!"
-    	
-    	assert len(iterable)==len(self.model_setup['model'])*len(self.model_setup['reaction_list']),"Iterable need to be composed of (n_models x n_targets) elements"
-    	
-    	model_index = 0
-    	iterable_pos = 0
-    	rxns_to_add = []
-    	model_list = []
+        assert type(self.model_setup['model']) == list and len(self.model_setup['model'])>1,"For distributing a pathway you need to pass a list of models."
+        
+        assert all([type(r)==cb.core.reaction.Reaction for r in self.model_setup['reaction_list']]),"Target list need to be composed of cobra.Reaction elements!"
+        
+        assert len(iterable)==len(self.model_setup['model'])*len(self.model_setup['reaction_list']),"Iterable need to be composed of (n_models x n_targets) elements"
+        
+        model_index = 0
+        iterable_pos = 0
+        rxns_to_add = []
+        model_list = []
 
-    	for d, reaction in zip(iterable, np.array(self.model_setup['reaction_list']*len(self.model_setup['model']))):
+        for d, reaction in zip(iterable, np.array(self.model_setup['reaction_list']*len(self.model_setup['model']))):
             
             if d==1:
                 rxns_to_add.append(reaction)
@@ -372,14 +379,14 @@ class StrainDesignScorer:
                 rxns_to_add = []         
         
         #Now execute a function that taking model_list computes the pathway yield
-    	try:
+        try:
             distribution_yield = pathway_yield(model_list, self.model_setup['reaction_list'])            
 
-    	except Exception as e:
+        except Exception as e:
             print(e)
             distribution_yield = 0
 
-    	return distribution_yield
+        return distribution_yield
     
     
     def run(self):
