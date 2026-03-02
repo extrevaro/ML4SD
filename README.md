@@ -149,6 +149,6 @@ Contributors names and contact info:
 
 ## License
 
-This project is licensed under the MIT License - see the `LICENSE` file for details
+This project is licensed under the he GNU General Public License version 3 License (GPLv3) - see the `LICENSE` file for details
 
 
